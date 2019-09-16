@@ -1,21 +1,20 @@
-
-fetch('https://randomuser.me/api/?results=12')
+let people = [];
+//CH,DE,DK,ES,FI,FR,NO,NZ,TR,BR,NL,CA ---- non english chracters
+fetch('https://randomuser.me/api/?results=12&inc=picture,name,email,location,phone,dob&nat=AU,GB,IE,US') 
   .then(response => response.json())
   .then(data => data.results.map(result => {
-
-    let fullName = getName(result);
-    let img = getImage(result);
-    let email = getEmail(result);
-    let location = getLocation(result);
-    
-    generateHTML(img, fullName, email, location);
-
+    people.push(result);
+    generateHTML(result);
     })// end map()
   ); // end fetch
+console.log(people);
 
-// functions:
+
+  
+
+// FUNCTIONS:
 function getImage(item) {
-  return item.picture.medium;
+  return item.picture.large;
 }
 function getName(item) {
   return [item.name.first, item.name.last].join(' ');
@@ -23,25 +22,52 @@ function getName(item) {
 function getEmail(item) {
   return item.email;
 }
-function getLocation(item) {
-  return [item.location.city, item.location.state].join(', ');
+function getCity(item) {
+  return item.location.city;
+}
+function getPhoneNumber(item) {
+  return item.phone;
+}
+function getStreetAddress(item) {
+  return item.location.street;
+}
+function getState(item) {
+  return item.location.state;
+}
+function getZip(item) {
+  return item.location.postcode;
+}
+function getBirthday(item) {
+return item.dob.date;
 }
 
 // Gallery markup from template: create and append gallery items; get and display random users
-function generateHTML(image, fullname, email, location) {
+function generateHTML(result) {
   const cardDiv = $(`<div class="card"> 
                         <div class="card-img-container">
-                          <img class="card-img" src="${image}" alt="profile picture">
+                          <img class="card-img" src="${getImage(result)}" alt="profile picture">
                         </div>
                         <div class="card-info-container">
-                          <h3 id="name" class="card-name cap">${fullname}</h3>
-                          <p class="card-text">${email}</p>
-                          <p class="card-text cap">${location}</p>
-                        </div>`); 
-  $('#gallery').append(cardDiv); 
+                          <h3 id="name" class="card-name cap">${getName(result)}</h3>
+                          <p class="card-text">${getEmail(result)}</p>
+                          <p class="card-text cap">${getCity(result)}</p>
+                        </div>
+                      </div>`); 
+  $('#gallery').append(cardDiv);
 } // end generateHTML
 
-// end functions
+// Populate modal window with HTML
+function populatePopUp(item) {
+  $(".modal-img").attr('src', `${getImage(item)}`);
+  $('.modal-info-container #name').text(`${getName(item)}`);
+  $( ".modal-info-container p:eq( 0 )").text(`${getEmail(item)}`);
+  $( ".modal-info-container p:eq( 1 )").text(`${getCity(item)}`);
+  $( ".modal-info-container p:eq( 2 )").text(`${getPhoneNumber(item)}`);
+  $( ".modal-info-container p:eq( 3 )").text(`${getStreetAddress(item)}, ${getCity(item)}, ${getState(item)} ${getZip(item)}`);
+  $(".modal-info-container p:eq( 4 )").text(`Birthday: ${getBirthday(item)}`); 
+} // end populatePopUp()
+
+// end FUNCTIONS
 
 
 // Search markup from template: create and append search input and submit button to form
@@ -54,24 +80,57 @@ $('.search-container').html(form);  // append search tools to form
 
 
 
-    //PUT BACK
 // Modal markup from template: create and append modal window elements to body
-const modalContainer = $(`<div class="modal-container">
-                            <div class="modal">
-                              <button type="button" id="modal-close-btn" class="modal-close-btn"><strong>X</strong></button>
-                              <div class="modal-info-container">
-                                <img class="modal-img" src="https://placehold.it/125x125" alt="profile picture">
-                                <h3 id="name" class="modal-name cap">name</h3>
-                                <p class="modal-text">email</p>
-                                <p class="modal-text cap">city</p>
-                                <hr>
-                                <p class="modal-text">(555) 555-5555</p>
-                                <p class="modal-text">123 Portland Ave., Portland, OR 97204</p>
-                                <p class="modal-text">Birthday: 10/21/2015</p>
+//function populatePopUp(item) {
+  const modalContainer = $(`<div class="modal-container">
+                              <div class="modal">
+                                <button type="button" id="modal-close-btn" class="modal-close-btn"><strong>X</strong></button>
+                                <div class="modal-info-container">                                 
+                                  <img class="modal-img" src="https://placehold.it/125x125" alt="profile picture">
+                                  <h3 id="name" class="modal-name cap">name</h3>
+                                  <p class="modal-text">email</p>
+                                  <p class="modal-text cap">city</p>
+                                  <hr>
+                                  <p class="modal-text">(555) 555-5555</p>
+                                  <p class="modal-text">123 Portland Ave., Portland, OR 97204</p>
+                                  <p class="modal-text">Birthday: 10/21/2015</p>
+                                </div>
                               </div>
-                            </div>
-                          </div>`); // end modalContainer
+                            </div>`); // end modalContainer
+//} // end populatePopUp()
 
-$('body').html(modalContainer);  // append modal window to body
+//$('body').append(modalContainer);  // append modal window to body
 
- //     PUT BACK
+$('#gallery').after(modalContainer);    // append modal window to body
+
+modalContainer.hide();
+
+
+
+// LISTENERS
+// pop up window pops up
+$('#gallery').click((e) => {
+  if(e.target.className !== 'gallery') { // || e.target.parentNode.className  === 'card'
+    populatePopUp(people[0]);
+   // console.log($('#gallery').index(e.target.name));
+    console.log(e.currentTarget.children);
+    //alert( $('#gallery').index(this) );
+    modalContainer.show();
+  }
+});
+/**
+ * $('selector').click(function(){
+    alert( $('selector').index(this) );
+});
+ */
+// pop up window closes
+modalContainer.click((e) => {
+  if(e.target.innerText === "X" || e.target.className === "modal-container") {
+  modalContainer.hide();
+  }
+});
+
+// END LISTENERS
+
+// const index = fruits.findIndex(fruit => fruit === "blueberries");
+
