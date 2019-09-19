@@ -4,13 +4,9 @@ fetch('https://randomuser.me/api/?results=12&inc=picture,name,email,location,pho
   .then(response => response.json())
   .then(data => data.results.map(result => {
     people.push(result);
-    generateHTML(result);
+    generateHTML(result); 
     })// end map()
-  ); // end fetch
-console.log(people);
-
-
-  
+  ) // end fetch;
 
 // FUNCTIONS:
 function getImage(item) {
@@ -38,8 +34,12 @@ function getZip(item) {
   return item.location.postcode;
 }
 function getBirthday(item) {
-return item.dob.date;
+  let dob = item.dob.date.slice(0, 10);
+  const regex = /(\d{4})-(\d{1,2})-(\d{1,2})/;
+  const replacement = '$2/$3/$1';
+  return dob.replace(regex, replacement);
 }
+
 
 // Gallery markup from template: create and append gallery items; get and display random users
 function generateHTML(result) {
@@ -56,6 +56,8 @@ function generateHTML(result) {
   $('#gallery').append(cardDiv);
 } // end generateHTML
 
+//
+
 // Populate modal window with HTML
 function populatePopUp(item) {
   $(".modal-img").attr('src', `${getImage(item)}`);
@@ -64,15 +66,34 @@ function populatePopUp(item) {
   $( ".modal-info-container p:eq( 1 )").text(`${getCity(item)}`);
   $( ".modal-info-container p:eq( 2 )").text(`${getPhoneNumber(item)}`);
   $( ".modal-info-container p:eq( 3 )").text(`${getStreetAddress(item)}, ${getCity(item)}, ${getState(item)} ${getZip(item)}`);
+  $( ".modal-info-container p:eq( 3 )").css("text-transform", "capitalize");
   $(".modal-info-container p:eq( 4 )").text(`Birthday: ${getBirthday(item)}`); 
+  $('.modal-container').show();
 } // end populatePopUp()
+
+function checkSource(event) {
+  if(event.className === 'card-img') {
+    let emailForPicture = event.parentNode.nextElementSibling.children[1].innerText;
+    return emailForPicture;
+  } 
+  if(event.className === 'card-text') {
+    return event.innerText; //compare to people.email
+  }
+  if(event.className === 'card-text cap') {
+    return event.previousElementSibling.innerText; //innerText.toLowerCase(); //compare to people.location.city
+  }
+  if(event.id === 'name') {
+    let firstName = event.innerText.split(/(\s+)/);
+    return firstName[0].toLowerCase();  // compare to people.name.first
+  }
+}   // end checkSource()
 
 // end FUNCTIONS
 
 
 // Search markup from template: create and append search input and submit button to form
 const form = $(`<form action="#" method="get">      
-                  <input type="search" id="search-input class="search-input" placeholder="Search...">
+                  <input type="search" id="search-input" class="search-input" placeholder="Search...">
                   <input type="submit" value="&#x1F50D;" id="search-submit" class="search-submit">
               </form>`); // end form
 
@@ -81,7 +102,6 @@ $('.search-container').html(form);  // append search tools to form
 
 
 // Modal markup from template: create and append modal window elements to body
-//function populatePopUp(item) {
   const modalContainer = $(`<div class="modal-container">
                               <div class="modal">
                                 <button type="button" id="modal-close-btn" class="modal-close-btn"><strong>X</strong></button>
@@ -97,32 +117,32 @@ $('.search-container').html(form);  // append search tools to form
                                 </div>
                               </div>
                             </div>`); // end modalContainer
-//} // end populatePopUp()
-
-//$('body').append(modalContainer);  // append modal window to body
 
 $('#gallery').after(modalContainer);    // append modal window to body
 
 modalContainer.hide();
 
-
-
 // LISTENERS
-// pop up window pops up
+
+let indexNumber;
 $('#gallery').click((e) => {
-  if(e.target.className !== 'gallery') { // || e.target.parentNode.className  === 'card'
-    populatePopUp(people[0]);
-   // console.log($('#gallery').index(e.target.name));
-    console.log(e.currentTarget.children);
-    //alert( $('#gallery').index(this) );
-    modalContainer.show();
-  }
-});
-/**
- * $('selector').click(function(){
-    alert( $('selector').index(this) );
-});
- */
+  let source = checkSource(e.target);
+  // $('.card').eq(11).hide();
+  people.forEach( person => {
+   if(source === person.name.first || source === person.email) {
+      if(source === person.email) {
+        indexNumber = people.indexOf(person);
+      }  else if(source === person.picture.large) {
+
+      }  else if(source === person.name.first) {
+        indexNumber =  people.indexOf(person);
+      } 
+     populatePopUp(people[indexNumber]);
+    }
+    
+  });
+}); // end #gallery event listener
+
 // pop up window closes
 modalContainer.click((e) => {
   if(e.target.innerText === "X" || e.target.className === "modal-container") {
@@ -132,5 +152,22 @@ modalContainer.click((e) => {
 
 // END LISTENERS
 
-// const index = fruits.findIndex(fruit => fruit === "blueberries");
 
+
+//  SEARCH!!!!! YAYAYAYAYAYAYYYYY!!!
+$('form').submit( () => {
+  let searchTerm = $('#search-input').val().toLowerCase();
+  let cards = $('.card');
+  people.forEach(person => {
+    let index = (people.indexOf(person));
+    cards.eq(index).show();
+    if(person.name.first.indexOf(searchTerm) === -1) { 
+      cards.eq(index).hide();
+    }
+    if(searchTerm.length === 0) {
+      cards.show();
+    }
+  });
+})
+
+//sname.indexOf(searchTerm) > -1
