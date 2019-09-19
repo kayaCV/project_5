@@ -40,7 +40,6 @@ function getBirthday(item) {
   return dob.replace(regex, replacement);
 }
 
-
 // Gallery markup from template: create and append gallery items; get and display random users
 function generateHTML(result) {
   const cardDiv = $(`<div class="card"> 
@@ -55,8 +54,6 @@ function generateHTML(result) {
                       </div>`); 
   $('#gallery').append(cardDiv);
 } // end generateHTML
-
-//
 
 // Populate modal window with HTML
 function populatePopUp(item) {
@@ -74,7 +71,7 @@ function populatePopUp(item) {
 function checkSource(event) {
   if(event.className === 'card-img') {
     let emailForPicture = event.parentNode.nextElementSibling.children[1].innerText;
-    return emailForPicture;
+    return emailForPicture; //compare to people.email
   } 
   if(event.className === 'card-text') {
     return event.innerText; //compare to people.email
@@ -87,9 +84,7 @@ function checkSource(event) {
     return firstName[0].toLowerCase();  // compare to people.name.first
   }
 }   // end checkSource()
-
 // end FUNCTIONS
-
 
 // Search markup from template: create and append search input and submit button to form
 const form = $(`<form action="#" method="get">      
@@ -98,8 +93,6 @@ const form = $(`<form action="#" method="get">
               </form>`); // end form
 
 $('.search-container').html(form);  // append search tools to form
-
-
 
 // Modal markup from template: create and append modal window elements to body
   const modalContainer = $(`<div class="modal-container">
@@ -132,15 +125,12 @@ $('#gallery').click((e) => {
    if(source === person.name.first || source === person.email) {
       if(source === person.email) {
         indexNumber = people.indexOf(person);
-      }  else if(source === person.picture.large) {
-
       }  else if(source === person.name.first) {
         indexNumber =  people.indexOf(person);
       } 
      populatePopUp(people[indexNumber]);
-    }
-    
-  });
+    } // end if block    
+  }); // end people.forEach
 }); // end #gallery event listener
 
 // pop up window closes
@@ -148,26 +138,30 @@ modalContainer.click((e) => {
   if(e.target.innerText === "X" || e.target.className === "modal-container") {
   modalContainer.hide();
   }
-});
-
-// END LISTENERS
-
-
+}); // end modalContainer listener
 
 //  SEARCH!!!!! YAYAYAYAYAYAYYYYY!!!
-$('form').submit( () => {
+let noResultsMessage = $(`<h3 id="no-results">No Results</h3>`)
+noResultsMessage.hide();
+$('#gallery').append(noResultsMessage);
+
+$('form').on('keyup', () => {
   let searchTerm = $('#search-input').val().toLowerCase();
   let cards = $('.card');
+  noResultsMessage.hide();
+   
   people.forEach(person => {
+    let personName = getName(person);
     let index = (people.indexOf(person));
     cards.eq(index).show();
-    if(person.name.first.indexOf(searchTerm) === -1) { 
+    if(personName.indexOf(searchTerm) === -1) { 
       cards.eq(index).hide();
     }
-    if(searchTerm.length === 0) {
-      cards.show();
-    }
   });
-})
+  if($('.card:hidden').length === 12) {
+    noResultsMessage.show();
+  }
+})  // end form listener (search)
 
-//sname.indexOf(searchTerm) > -1
+// END LISTENERS
+console.log($('#search-input'));
